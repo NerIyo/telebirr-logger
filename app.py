@@ -15,6 +15,10 @@ with app.app_context():
 @app.route('/webhook/telebirr', methods=['POST'])
 def telebirr_webhook():
     data = request.json
+    # Check for existing transaction
+    if PaymentLog.query.filter_by(transaction_id=data.get('transaction_id')).first():
+        return jsonify({"error": "Duplicate transaction ID"}), 400
+
     log = PaymentLog(
         phone_number=data.get('phone_number'),
         amount=data.get('amount'),
@@ -25,6 +29,7 @@ def telebirr_webhook():
     db.session.add(log)
     db.session.commit()
     return jsonify({"message": "Logged successfully"}), 200
+
 
 @app.route('/logs', methods=['GET'])
 def get_logs():
